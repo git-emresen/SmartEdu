@@ -1,7 +1,23 @@
 const nodemailer = require('nodemailer')
-exports.getIndexPage= (req,res)=>{
+const Course=require('../models/Course')
+const User=require('../models/User')
+
+
+
+
+exports.getIndexPage= async (req,res)=>{
+ 
+    const courses= await Course.find().sort('-createdAt').limit(2)
+    const totalCourses=await Course.find().countDocuments()
+    const totalStudents=await User.countDocuments({role:'student'})
+    const totalTeachers=await User.countDocuments({role:'teacher'})
+
     res.status(200).render("index",{
-        page_name:"index"
+        page_name:"index",
+        courses,
+        totalCourses,
+        totalStudents,
+        totalTeachers
     })
 }
 
@@ -30,6 +46,8 @@ exports.getContactPage= (req,res)=>{
 }
 
 exports.sendEmail= async (req,res)=>{
+
+
    const outputMessage=
    `
    <h1>Mail Details</h1>
@@ -47,12 +65,13 @@ exports.sendEmail= async (req,res)=>{
     auth: {
       // TODO: replace `user` and `pass` values from <https://forwardemail.net>
       user: "mail.emresen@gmail.com",
-      pass: "jgre cfct yknx wxgl",
+      pass: "/* ghij eond rwqt podm */",
     },
   });
   
   // async..await is not allowed in global scope, must use a wrapper
   async function main() {
+    try{
     // send mail with defined transport object
     const info = await transporter.sendMail({
       from: '"SmartEDU Contact Form 👻" <mail.emresen@gmail.com>', // sender address
@@ -62,8 +81,16 @@ exports.sendEmail= async (req,res)=>{
     });
   
     console.log("Message sent: %s", info.messageId);
-    console.log("Preview Url: %s",nodemailer.getTestMessageUrl(info))
+    req.flash("success","We received your massage successfully")
+    res.status(200).redirect('/contact')
+      }
+      catch(err){
+        req.flash("error","An error accured")
+        res.status(400).redirect('/contact')
+      }
  }
  main().catch(console.error);
- res.status(200).redirect('/contact')
+
+ 
 }
+
